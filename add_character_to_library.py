@@ -15,9 +15,9 @@ def lock_node(node_name, translation=True, rotation=True, scale=True):
         cmds.setAttr(f"{node_name}.{channel}", lock=True)
 
 def import_fbx_rig(fbx_path):
+    cmds.file(newFile=True, force=True)
     fbx_name = fbx_path.split("\\")[-1]
     character_name = fbx_name.split(".")[0]
-    cmds.file(newFile=True, force=True) 
     cmds.file(fbx_path, i=True)
     return character_name
 
@@ -79,6 +79,11 @@ def add_acg_rig_to_library():
     fbx_path = "C:\\Users\\COVISE\\Desktop\\Character_workflow_test\\character\\_import\\Wanda\\Wanda.fbx"
     character_name = import_fbx_rig(fbx_path)
     structure_rig()
+    create_hik_rig()
+    char_def_dict = character_definition_from_xml("C:\\Users\\COVISE\\Desktop\\Character_workflow_test\\script\\CharacterGenerator_CharacterDefinition.xml")
+    apply_joint_mapping(char_def_dict, rig_name)
+    cmds.evalDeferred(create_control_rig)
+    save_rig("C:\\Users\\COVISE\\Desktop\\Character_workflow_test")
 
 
 def create_hik_rig():
@@ -145,17 +150,22 @@ def create_control_rig():
         else:
             cmds.setAttr(f"{rig_name}_Ctrl_{effector}.radius", finger_radius)
 
+
+def save_rig(library_output_dir):
+    cmds.file(rename=f"{library_output_dir}/{character_name}.mb")
+    cmds.file(save=True, force=True)
+
+
 add_acg_rig_to_library()
-create_hik_rig()
-char_def_dict = character_definition_from_xml("C:\\Users\\COVISE\\Desktop\\Character_workflow_test\\script\\CharacterGenerator_CharacterDefinition.xml")
-apply_joint_mapping(char_def_dict, rig_name)
-cmds.evalDeferred(create_control_rig)
+
 
 # ToDo: Find geo not present in all resolution, and instanciate into groups where missing
 # ToDo: How to handle if a geo LOD level is missing?
-# ToDo: Save rig as a maya file with textures in correct directory
+# ToDo: Create according library structure when saving, including all textures in correct directory
+# ToDo: Relink all textures to the one in the dir (also check how to do this if they are only present in the fbx file)
+# ToDo: Check if character with this name already exists
 # ToDo: Logging
 # ToDo: Cleanup
 
-# ToDo: Accept input: dir, zip and fbx
+# ToDo: Accept input: dir, zip (most important!) and fbx
 # ToDo: Write batch entry point
