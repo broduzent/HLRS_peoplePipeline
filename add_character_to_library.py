@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import maya.mel as mel
+import xml.etree.ElementTree as xmlET
 
 def lock_node(node_name, translation=True, rotation=True, scale=True):
     channels = []
@@ -92,8 +93,18 @@ def create_hik_rig():
     cmds.rename(cmds.ls("Character1")[0], rig_name)
 
 
-def apply_joint_mapping(xml_path):
-    pass
+def character_definition_from_xml(xml_path):
+    with open(xml_path, "r", encoding="utf-8") as xml_definition:
+        character_xml_data = xml_definition.read()
+    root = xmlET.fromstring(character_xml_data)
+    char_def_dict = {el.get("key"): el.get("value") for el in root.findall("./match_list/item")}
+    return char_def_dict
+
+
+def apply_joint_mapping(char_def_dict, rig_name):
+    for idx, (hik_joint, rig_joint) in enumerate(char_def_dict.items()):
+        if rig_joint:
+            mel.eval(f'setCharacterObject("{rig_joint}","{rig_name}",{idx},0);')
     
 
 def create_control_rig():
@@ -134,12 +145,17 @@ def create_control_rig():
         else:
             cmds.setAttr(f"{rig_name}_Ctrl_{effector}.radius", finger_radius)
 
-
 add_acg_rig_to_library()
 create_hik_rig()
-apply_joint_mapping("")
-create_control_rig()
+char_def_dict = character_definition_from_xml("C:\\Users\\COVISE\\Desktop\\Character_workflow_test\\script\\CharacterGenerator_CharacterDefinition.xml")
+apply_joint_mapping(char_def_dict, rig_name)
+cmds.evalDeferred(create_control_rig)
 
-# ToDo: Find geo not present in all resolutions, and instanciate into other groups
+# ToDo: Find geo not present in all resolution, and instanciate into groups where missing
 # ToDo: How to handle if a geo LOD level is missing?
-# ToDo: Map joints according to xml
+# ToDo: Save rig as a maya file with textures in correct directory
+# ToDo: Logging
+# ToDo: Cleanup
+
+# ToDo: Accept input: dir, zip and fbx
+# ToDo: Write batch entry point
